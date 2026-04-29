@@ -6,7 +6,7 @@
   <img src="assets/banner.png" alt="claude-ds banner" width="100%">
 </p>
 
-> Claude Code 的 DeepSeek 平替 -- 一样的体验，几分之一的价格。
+> 用 DeepSeek 平替 Claude Code 的默认后端 -- 一样的体验，几分之一的价格。
 
 ## 这是什么?
 
