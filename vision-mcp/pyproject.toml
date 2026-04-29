@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "claude-ds-vision-mcp"
+version = "1.0.0"
+description = "MCP server that gives text-only LLMs the ability to see images via any OpenAI-compatible vision API."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+authors = [{ name = "Daniel Zhang" }]
+keywords = ["mcp", "vision", "clipboard", "deepseek", "claude-code", "llm"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Operating System :: OS Independent",
+]
+dependencies = [
+  "mcp>=1.0.0",
+  "openai>=1.0.0",
+  "aiofiles>=23.0.0",
+  "Pillow>=10.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/danielzhangau/claude-ds"
+Repository = "https://github.com/danielzhangau/claude-ds"
+Issues = "https://github.com/danielzhangau/claude-ds/issues"
+
+[project.scripts]
+claude-ds-vision = "clipboard_vision_mcp.server:run"
+
+[tool.setuptools.packages.find]
+include = ["clipboard_vision_mcp*"]
+exclude = ["examples*", "docs*", "tests*"]

@@ -1,0 +1,18 @@
+{
+  "_comment": "Add these entries to your existing ~/.claude/settings.json",
+
+  "permissions.allow (append)": [
+    "mcp__vision"
+  ],
+
+  "hooks.PreToolUse (append)": {
+    "matcher": "Read",
+    "hooks": [
+      {
+        "type": "command",
+        "command": "CLAUDE_DS_DIR/scripts/vision-guard.sh",
+        "timeout": 5
+      }
+    ]
+  }
+}

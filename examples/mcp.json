@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "vision": {
+      "command": "VISION_MCP_VENV/bin/python",
+      "args": ["-m", "clipboard_vision_mcp.server"],
+      "env": {
+        "VISION_API_KEY": "YOUR_VISION_API_KEY",
+        "VISION_BASE_URL": "YOUR_VISION_BASE_URL",
+        "VISION_MODEL": "YOUR_VISION_MODEL"
+      },
+      "description": "Image analysis via vision model (gives text-only LLMs vision capability)"
+    }
+  }
+}
