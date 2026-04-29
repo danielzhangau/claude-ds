@@ -6,7 +6,6 @@ build-backend = "setuptools.build_meta"
 name = "claude-ds-vision-mcp"
 version = "1.0.0"
 description = "MCP server that gives text-only LLMs the ability to see images via any OpenAI-compatible vision API."
-readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.10"
 authors = [{ name = "Daniel Zhang" }]
@@ -23,6 +22,7 @@ classifiers = [
 dependencies = [
   "mcp>=1.0.0",
   "openai>=1.0.0",
+  "httpx>=0.25.0",
   "aiofiles>=23.0.0",
   "Pillow>=10.0.0",
 ]
