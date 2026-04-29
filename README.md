@@ -6,13 +6,13 @@
   <img src="assets/banner.png" alt="claude-ds banner" width="100%">
 </p>
 
-> 把 [Claude Code](https://code.claude.com/docs/en/overview) 的后端换成 DeepSeek V4 -- 一样的体验，几分之一的价格。
+> Claude Code 的 DeepSeek 平替 -- 一样的体验，几分之一的价格。
 
 ## 这是什么?
 
-[Claude Code](https://code.claude.com/docs/en/overview) 是 Anthropic 做的终端 AI 编程助手 -- 能读代码、改文件、跑命令、管 Git，体验很好。但默认用的 Claude Opus 模型，输出要 **$25 / 百万 token**，不便宜。
+[Claude Code](https://code.claude.com/docs/en/overview) 是 Anthropic 做的终端 AI 编程助手 -- 能读代码、改文件、跑命令、管 Git，体验很好。但默认用的 Claude Opus 模型，输出要 **$25 / 百万 token**，用起来肉疼。
 
-**claude-ds** 把后端换成 [DeepSeek V4](https://api-docs.deepseek.com/)。工具、工作流、内置功能全都不变，只是**省 7~89 倍的钱**。
+**claude-ds** 是一个低成本方案：把后端换成 [DeepSeek V4](https://api-docs.deepseek.com/)，工具、工作流、内置功能全都不变，**省 7~89 倍的钱**。对于想省钱又不想换工具的开发者来说，这就是 Claude Code 最实用的平替。
 
 | 模型 | 输出价格（每百万 token） | 对比 Opus |
 |------|:----------------------:|:---------:|
@@ -46,6 +46,8 @@ claude-ds-flash    # V4-Flash -- 小改动、简单任务
 
 搞定。`claude-ds` 和 `claude-ds-flash` 可以直接替代 `claude` 命令。Claude Code 的所有功能（斜杠命令、`/compact`、Agent tool、hooks、MCP servers）都正常可用。边界情况见[已知限制](#已知限制)。
 
+> 如果你觉得 Claude Code 好用但嫌贵，又不想折腾换别的工具，试试这个。
+
 ## 项目结构
 
 | 组件 | 说明 |
@@ -57,7 +59,7 @@ claude-ds-flash    # V4-Flash -- 小改动、简单任务
 
 ## 工作原理
 
-`claude-ds` 就是一层薄壳 -- 通过环境变量把 `claude` 的 API 请求指向 DeepSeek 而不是 Anthropic。Claude Code 完全无感，因为 DeepSeek 提供了 [Anthropic 兼容接口](https://api-docs.deepseek.com/guides/anthropic_api)。
+`claude-ds` 就是一层薄壳 -- 通过环境变量把 `claude` 的 API 请求指向 DeepSeek 而不是 Anthropic。Claude Code 完全无感，因为 DeepSeek 提供了 [Anthropic 兼容接口](https://api-docs.deepseek.com/guides/anthropic_api)。不需要改代码，不需要装额外的代理，开箱即用。
 
 <p align="center">
   <img src="assets/architecture.svg" alt="架构图" width="100%"/>
