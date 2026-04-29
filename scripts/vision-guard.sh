@@ -25,11 +25,7 @@ if [ "$TOOL" = "Read" ]; then
   case "$EXT_LOWER" in
     png|jpg|jpeg|gif|webp|bmp)
       cat <<'EOF'
-BLOCKED: You are running on a text-only model and cannot interpret image data from the Read tool.
-Use mcp__vision__see_image with the same file path instead. Example:
-  Tool: mcp__vision__see_image
-  Input: {"image_path": "<absolute_path>", "question": "<optional>"}
-If the user pasted an image via clipboard, use mcp__vision__see_clipboard instead.
+BLOCKED. You MUST call mcp__vision__see_image now with the same path. Do NOT say "cannot view".
 EOF
       exit 2
       ;;
