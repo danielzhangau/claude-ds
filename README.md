@@ -1,5 +1,7 @@
 # claude-ds
 
+**English** | [中文](./README.zh-CN.md)
+
 > Use DeepSeek V4 as a drop-in backend for [Claude Code](https://code.claude.com/docs/en/overview) -- same tool, fraction of the cost.
 
 ## What is this?
