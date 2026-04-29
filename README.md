@@ -1,23 +1,24 @@
 # claude-ds
 
-> Use DeepSeek V4 as a drop-in backend for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) -- same harness, fraction of the cost.
+> Use DeepSeek V4 as a drop-in backend for [Claude Code](https://code.claude.com/docs/en/overview) -- same tool, fraction of the cost.
 
-Claude Code's harness (multi-layer context compression, Agent Teams, 24 tools, Git integration) is what makes it powerful -- the model is swappable. This project packages a production-ready DeepSeek V4 configuration with:
+## What is this?
 
-- **Optimized environment variables** audited against Claude Code's binary (50+ vars checked, critical ones identified)
-- **Vision MCP server** that gives text-only models the ability to see images via any OpenAI-compatible vision API
-- **PreToolUse hook** that automatically redirects image file reads to the Vision MCP when running on text-only backends
-- **One-line installer** that sets everything up
+[Claude Code](https://code.claude.com/docs/en/overview) is Anthropic's AI coding assistant that runs in your terminal -- it reads your codebase, edits files, runs commands, and manages Git. It's excellent, but the default model (Claude Opus) costs **$25 per million output tokens**.
 
-## Cost comparison
+**claude-ds** lets you run Claude Code with [DeepSeek V4](https://api-docs.deepseek.com/) as the backend instead. You get the same tool, same workflow, same built-in tools -- just **~7-89x cheaper** depending on model and current promotions.
 
 | Model | Output cost (per 1M tokens) | Relative to Opus |
 |-------|:---------------------------:|:----------------:|
 | Claude Opus 4.6 | $25.00 | 1x |
-| DeepSeek V4-Pro | $0.87* | **~29x cheaper** |
+| DeepSeek V4-Pro | $3.48 | **~7x cheaper** |
 | DeepSeek V4-Flash | $0.28 | **~89x cheaper** |
 
-\* V4-Pro 75% launch discount effective through May 5, 2026 15:59 UTC. Regular price: $3.48/M.
+## Prerequisites
+
+1. **Claude Code CLI** -- `curl -fsSL https://claude.ai/install.sh | bash` or `npm install -g @anthropic-ai/claude-code` ([docs](https://code.claude.com/docs/en/overview))
+2. **DeepSeek API key** -- get one at [platform.deepseek.com](https://platform.deepseek.com/api_keys)
+3. **Python 3.10+** -- needed if you want vision support (optional)
 
 ## Quick start
 
@@ -37,13 +38,35 @@ claude-ds          # V4-Pro -- complex coding, architecture, refactoring
 claude-ds-flash    # V4-Flash -- quick fixes, simple tasks
 ```
 
-## Architecture
+That's it. `claude-ds` and `claude-ds-flash` are drop-in replacements for the `claude` command. Everything you know about Claude Code (slash commands, `/compact`, Agent tool, hooks, MCP servers) works the same way. See [Known limitations](#known-limitations) for edge cases.
+
+## What's included
+
+| Component | What it does |
+|-----------|-------------|
+| **Shell functions** | `claude-ds` and `claude-ds-flash` commands with optimized env vars |
+| **Vision MCP server** | Gives text-only models the ability to see images (optional) |
+| **Vision guard hook** | Automatically redirects image reads to the Vision MCP |
+| **One-line installer** | Sets everything up interactively |
+
+## How it works
+
+The `claude-ds` command is a thin wrapper that launches `claude` with environment variables pointing to DeepSeek's API instead of Anthropic's. Claude Code doesn't know or care -- DeepSeek provides an [Anthropic-compatible endpoint](https://api-docs.deepseek.com/guides/anthropic_api).
 
 <p align="center">
   <img src="assets/architecture.svg" alt="Architecture diagram" width="100%"/>
 </p>
 
-## Environment variables (audited)
+**Two modes:**
+- **`claude-ds`** (Pro mode) -- V4-Pro for the main conversation (1M context), V4-Flash for internal tasks. Best for complex work.
+- **`claude-ds-flash`** (Flash mode) -- V4-Flash for everything. Maximum cost savings.
+
+<p align="center">
+  <img src="assets/model-tiers.svg" alt="Model tier routing" width="100%"/>
+</p>
+
+<details>
+<summary><strong>Environment variables (advanced)</strong></summary>
 
 These variables were identified by reverse-engineering Claude Code v2.1.71's binary. The critical ones missing from most third-party setups are marked.
 
@@ -61,15 +84,16 @@ These variables were identified by reverse-engineering Claude Code v2.1.71's bin
 | `CLAUDE_CODE_DISABLE_LEGACY_MODEL_REMAP` | Prevent model name remapping | May corrupt `deepseek-v4-*` names |
 | `CLAUDE_CODE_EFFORT_LEVEL` | Thinking depth | `auto` (DeepSeek recommends `max`) |
 
-## Model tier strategy
+You don't need to set these manually -- `install.sh` handles everything. This table is for understanding what's happening under the hood.
 
-<p align="center">
-  <img src="assets/model-tiers.svg" alt="Model tier routing" width="100%"/>
-</p>
+</details>
 
-## Vision MCP server
+<details>
+<summary><strong>Vision MCP server (optional)</strong></summary>
 
-The Vision MCP server bridges text-only LLMs to any OpenAI-compatible vision model. It provides two tools:
+DeepSeek V4 is text-only -- it can't see images. The Vision MCP server bridges this gap by routing image analysis to any OpenAI-compatible vision model.
+
+**Two tools:**
 
 | Tool | Description |
 |------|-------------|
@@ -78,20 +102,20 @@ The Vision MCP server bridges text-only LLMs to any OpenAI-compatible vision mod
 
 Both accept an optional `question` parameter. If omitted, returns a thorough description. If provided, answers that specific question about the image.
 
-### Supported vision backends
+**Supported vision backends:**
 
 Any OpenAI-compatible vision API works. Examples:
 
 | Provider | Model | Endpoint |
 |----------|-------|----------|
-| Alibaba Cloud (Bailian) | `qwen-vl-plus` | `https://dashscope.aliyuncs.com/compatible-mode/v1` |
+| Alibaba Cloud (Bailian) | `qwen3-vl-plus` | `https://dashscope.aliyuncs.com/compatible-mode/v1` |
 | OpenAI | `gpt-4o` | `https://api.openai.com/v1` |
 | Groq | `meta-llama/llama-4-scout-17b-16e-instruct` | `https://api.groq.com/openai/v1` |
-| Local (Ollama) | `llava` | `http://localhost:11434/v1` |
+| Local (Ollama) | `llama3.2-vision` | `http://localhost:11434/v1` |
 
-### Vision guard hook
+**Vision guard hook:**
 
-The `vision-guard.sh` PreToolUse hook provides **deterministic enforcement** (vs probabilistic CLAUDE.md compliance):
+The `vision-guard.sh` PreToolUse hook provides deterministic enforcement -- when the model tries to `Read` an image file, the hook blocks it and redirects to `see_image` instead. This is more reliable than CLAUDE.md instructions alone.
 
 <p align="center">
   <img src="assets/vision-flow.svg" alt="Vision guard hook flow" width="100%"/>
@@ -102,6 +126,8 @@ Key properties:
 - Only activates when `ANTHROPIC_BASE_URL` points to a non-Anthropic endpoint
 - Returns exit code 2 with instructions to use `see_image` instead
 - **No-op for native Claude Opus** (which has built-in multimodal vision)
+
+</details>
 
 ## Known limitations
 
@@ -134,6 +160,6 @@ MIT
 
 ## Credits
 
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) by Anthropic
+- [Claude Code](https://code.claude.com/docs/en/overview) by Anthropic
 - [DeepSeek V4](https://api-docs.deepseek.com/) by DeepSeek
 - Vision MCP server forked from [clipboard-vision-mcp](https://github.com/Capetlevrai/clipboard-vision-mcp) by Capetlevrai
