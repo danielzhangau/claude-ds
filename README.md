@@ -108,7 +108,7 @@ Key properties:
 | Limitation | Workaround |
 |------------|------------|
 | Ctrl+V image paste may cause 400 error on text-only backends | Save image to file, use `see_image`; or use `see_clipboard` |
-| Session may be corrupted after image paste error ([#16169](https://github.com/anthropics/claude-code/issues/16169)) | Start a new session |
+| Session may be corrupted after image paste error ([#19031](https://github.com/anthropics/claude-code/issues/19031)) | `/rewind` or Esc twice to step back; if unrecoverable, start a new session |
 | DeepSeek API 503 during peak hours | `MAX_RETRIES=3` handles this automatically |
 | Coherence may degrade past 500K tokens | Use `/compact` in long sessions |
 | V4 thinking mode `reasoning_content` may 400 in multi-turn | Restart session if this occurs |
