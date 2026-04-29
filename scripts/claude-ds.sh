@@ -47,7 +47,7 @@ claude-ds() {
 }
 
 # claude-ds-flash: Flash mode -- quick fixes, simple tasks, maximum savings
-# All tiers use V4-Flash (200K context)
+# All tiers use V4-Flash (1M context)
 claude-ds-flash() {
   if [ -z "$DEEPSEEK_API_KEY" ]; then
     echo "Error: DEEPSEEK_API_KEY is not set." >&2
