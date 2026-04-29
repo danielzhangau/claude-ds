@@ -1,176 +1,176 @@
 # claude-ds
 
-**English** | [中文](./README.zh-CN.md)
+[English](./README.en.md) | **中文**
 
 <p align="center">
   <img src="assets/banner.png" alt="claude-ds banner" width="100%">
 </p>
 
-> Use DeepSeek V4 as a drop-in backend for [Claude Code](https://code.claude.com/docs/en/overview) -- same tool, fraction of the cost.
+> 用 DeepSeek V4 作为 [Claude Code](https://code.claude.com/docs/en/overview) 的后端 -- 同样的工具，几分之一的价格。
 
-## What is this?
+## 这是什么？
 
-[Claude Code](https://code.claude.com/docs/en/overview) is Anthropic's AI coding assistant that runs in your terminal -- it reads your codebase, edits files, runs commands, and manages Git. It's excellent, but the default model (Claude Opus) costs **$25 per million output tokens**.
+[Claude Code](https://code.claude.com/docs/en/overview) 是 Anthropic 推出的 AI 编程助手，运行在终端中 -- 它能读取代码库、编辑文件、执行命令、管理 Git。非常好用，但默认模型（Claude Opus）的输出价格高达 **$25 / 百万 token**。
 
-**claude-ds** lets you run Claude Code with [DeepSeek V4](https://api-docs.deepseek.com/) as the backend instead. You get the same tool, same workflow, same built-in tools -- just **~7-89x cheaper** depending on model and current promotions.
+**claude-ds** 让你用 [DeepSeek V4](https://api-docs.deepseek.com/) 替代默认模型来运行 Claude Code。同样的工具、同样的工作流、同样的内置工具 -- 只是**便宜约 7-89 倍**（取决于模型选择）。
 
-| Model | Output cost (per 1M tokens) | Relative to Opus |
-|-------|:---------------------------:|:----------------:|
+| 模型 | 输出价格（每百万 token） | 相对于 Opus |
+|------|:----------------------:|:----------:|
 | Claude Opus 4.6 | $25.00 | 1x |
-| DeepSeek V4-Pro | $3.48 | **~7x cheaper** |
-| DeepSeek V4-Flash | $0.28 | **~89x cheaper** |
+| DeepSeek V4-Pro | $3.48 | **约 7 倍** |
+| DeepSeek V4-Flash | $0.28 | **约 89 倍** |
 
-## Prerequisites
+## 前置条件
 
-1. **Claude Code CLI** -- `curl -fsSL https://claude.ai/install.sh | bash` or `npm install -g @anthropic-ai/claude-code` ([docs](https://code.claude.com/docs/en/overview))
-2. **DeepSeek API key** -- get one at [platform.deepseek.com](https://platform.deepseek.com/api_keys)
-3. **Python 3.10+** -- needed if you want vision support (optional)
+1. **Claude Code CLI** -- `curl -fsSL https://claude.ai/install.sh | bash` 或 `npm install -g @anthropic-ai/claude-code`（[文档](https://code.claude.com/docs/en/overview)）
+2. **DeepSeek API key** -- 在 [platform.deepseek.com](https://platform.deepseek.com/api_keys) 获取
+3. **Python 3.10+** -- 仅在需要图像识别功能时安装（可选）
 
-## Quick start
+## 快速开始
 
 ```bash
-# 1. Clone
+# 1. 克隆仓库
 git clone https://github.com/danielzhangau/claude-ds.git
 cd claude-ds
 
-# 2. Install (interactive -- prompts for API keys)
+# 2. 安装（交互式 -- 会提示输入 API key）
 ./install.sh
 
-# 3. Restart your shell
-source ~/.zshrc  # or ~/.bashrc
+# 3. 重启终端
+source ~/.zshrc  # 或 ~/.bashrc
 
-# 4. Use it
-claude-ds          # V4-Pro -- complex coding, architecture, refactoring
-claude-ds-flash    # V4-Flash -- quick fixes, simple tasks
+# 4. 使用
+claude-ds          # V4-Pro 模式 -- 复杂编码、架构设计、重构
+claude-ds-flash    # V4-Flash 模式 -- 快速修复、简单任务
 ```
 
-That's it. `claude-ds` and `claude-ds-flash` are drop-in replacements for the `claude` command. Everything you know about Claude Code (slash commands, `/compact`, Agent tool, hooks, MCP servers) works the same way. See [Known limitations](#known-limitations) for edge cases.
+安装完成。`claude-ds` 和 `claude-ds-flash` 是 `claude` 命令的替代品，用法完全一样。Claude Code 的所有功能（斜杠命令、`/compact`、Agent tool、hooks、MCP servers）都照常工作。已知的差异见[已知限制](#已知限制)。
 
-## What's included
+## 包含内容
 
-| Component | What it does |
-|-----------|-------------|
-| **Shell functions** | `claude-ds` and `claude-ds-flash` commands with optimized env vars |
-| **Vision MCP server** | Gives text-only models the ability to see images (optional) |
-| **Vision guard hook** | Automatically redirects image reads to the Vision MCP |
-| **One-line installer** | Sets everything up interactively |
+| 组件 | 功能 |
+|------|------|
+| **Shell 函数** | `claude-ds` 和 `claude-ds-flash` 命令，已优化环境变量 |
+| **Vision MCP 服务器** | 让纯文本模型具备图像识别能力（可选） |
+| **Vision guard hook** | 自动将图像读取请求重定向到 Vision MCP |
+| **一键安装器** | 交互式完成所有配置 |
 
-## How it works
+## 工作原理
 
-The `claude-ds` command is a thin wrapper that launches `claude` with environment variables pointing to DeepSeek's API instead of Anthropic's. Claude Code doesn't know or care -- DeepSeek provides an [Anthropic-compatible endpoint](https://api-docs.deepseek.com/guides/anthropic_api).
+`claude-ds` 命令本质上是一个薄封装，它通过环境变量让 `claude` 指向 DeepSeek 的 API 而非 Anthropic 的。Claude Code 本身无感知 -- DeepSeek 提供了 [Anthropic 兼容端点](https://api-docs.deepseek.com/guides/anthropic_api)。
 
 <p align="center">
-  <img src="assets/architecture.svg" alt="Architecture diagram" width="100%"/>
+  <img src="assets/architecture.svg" alt="架构图" width="100%"/>
 </p>
 
-**Two modes:**
-- **`claude-ds`** (Pro mode) -- V4-Pro for the main conversation (1M context), V4-Flash for internal tasks. Best for complex work.
-- **`claude-ds-flash`** (Flash mode) -- V4-Flash for everything. Maximum cost savings.
+**两种模式：**
+- **`claude-ds`**（Pro 模式）-- 主对话使用 V4-Pro（1M 上下文），内部任务使用 V4-Flash。适合复杂工作。
+- **`claude-ds-flash`**（Flash 模式）-- 所有任务都用 V4-Flash。最大程度节省成本。
 
 <p align="center">
-  <img src="assets/model-tiers.svg" alt="Model tier routing" width="100%"/>
+  <img src="assets/model-tiers.svg" alt="模型层级路由" width="100%"/>
 </p>
 
 <details>
-<summary><strong>Environment variables (advanced)</strong></summary>
+<summary><strong>环境变量（进阶）</strong></summary>
 
-These variables were identified by reverse-engineering Claude Code v2.1.71's binary. The critical ones missing from most third-party setups are marked.
+以下变量通过逆向工程 Claude Code v2.1.71 的二进制文件识别得出。大多数第三方配置方案中遗漏的关键变量已标注。
 
-| Variable | Purpose | Default risk if unset |
-|----------|---------|----------------------|
-| `ANTHROPIC_BASE_URL` | Route to DeepSeek endpoint | Uses Anthropic (fails without subscription) |
-| `ANTHROPIC_AUTH_TOKEN` | DeepSeek API key | Auth failure |
-| `ANTHROPIC_MODEL` | Primary conversation model | Uses Claude model name (API error) |
-| `ANTHROPIC_DEFAULT_OPUS_MODEL` | Opus tier mapping | Uses `claude-opus-*` |
-| `ANTHROPIC_DEFAULT_SONNET_MODEL` | Sonnet tier mapping | Uses `claude-sonnet-*` |
-| `ANTHROPIC_DEFAULT_HAIKU_MODEL` | Haiku tier mapping | Uses `claude-haiku-*` |
-| **`ANTHROPIC_SMALL_FAST_MODEL`** | **Internal lightweight tasks (many refs in binary)** | **Uses `claude-haiku-*` -- silent failures** |
-| `CLAUDE_CODE_SUBAGENT_MODEL` | Agent tool subagents | Falls back to Sonnet tier |
-| `CLAUDE_CODE_MAX_RETRIES` | API retry on 503 | 0 retries (immediate failure) |
-| `CLAUDE_CODE_DISABLE_LEGACY_MODEL_REMAP` | Prevent model name remapping | May corrupt `deepseek-v4-*` names |
-| `CLAUDE_CODE_EFFORT_LEVEL` | Thinking depth | `auto` (DeepSeek recommends `max`) |
+| 变量 | 用途 | 未设置时的风险 |
+|------|------|--------------|
+| `ANTHROPIC_BASE_URL` | 路由到 DeepSeek 端点 | 使用 Anthropic（无订阅会失败） |
+| `ANTHROPIC_AUTH_TOKEN` | DeepSeek API key | 认证失败 |
+| `ANTHROPIC_MODEL` | 主对话模型 | 使用 Claude 模型名（API 报错） |
+| `ANTHROPIC_DEFAULT_OPUS_MODEL` | Opus 层级映射 | 使用 `claude-opus-*` |
+| `ANTHROPIC_DEFAULT_SONNET_MODEL` | Sonnet 层级映射 | 使用 `claude-sonnet-*` |
+| `ANTHROPIC_DEFAULT_HAIKU_MODEL` | Haiku 层级映射 | 使用 `claude-haiku-*` |
+| **`ANTHROPIC_SMALL_FAST_MODEL`** | **内部轻量任务（二进制中大量引用）** | **使用 `claude-haiku-*` -- 静默失败** |
+| `CLAUDE_CODE_SUBAGENT_MODEL` | Agent tool 子代理 | 回退到 Sonnet 层级 |
+| `CLAUDE_CODE_MAX_RETRIES` | API 503 重试次数 | 0 次重试（立即失败） |
+| `CLAUDE_CODE_DISABLE_LEGACY_MODEL_REMAP` | 阻止模型名重映射 | 可能破坏 `deepseek-v4-*` 名称 |
+| `CLAUDE_CODE_EFFORT_LEVEL` | 思考深度 | `auto`（DeepSeek 推荐 `max`） |
 
-You don't need to set these manually -- `install.sh` handles everything. This table is for understanding what's happening under the hood.
+无需手动设置 -- `install.sh` 会自动处理。此表仅供了解底层机制。
 
 </details>
 
 <details>
-<summary><strong>Vision MCP server (optional)</strong></summary>
+<summary><strong>Vision MCP 服务器（可选）</strong></summary>
 
-DeepSeek V4 is text-only -- it can't see images. The Vision MCP server bridges this gap by routing image analysis to any OpenAI-compatible vision model.
+DeepSeek V4 是纯文本模型，无法识别图像。Vision MCP 服务器通过将图像分析请求路由到任意 OpenAI 兼容的视觉模型来弥补这一差距。
 
-**Two tools:**
+**两个工具：**
 
-| Tool | Description |
-|------|-------------|
-| `see_image` | Analyze an image file on disk (absolute path) |
-| `see_clipboard` | Analyze the image currently in the system clipboard |
+| 工具 | 描述 |
+|------|------|
+| `see_image` | 分析磁盘上的图像文件（绝对路径） |
+| `see_clipboard` | 分析当前系统剪贴板中的图像 |
 
-Both accept an optional `question` parameter. If omitted, returns a thorough description. If provided, answers that specific question about the image.
+两者都接受可选的 `question` 参数。省略则返回详细描述，提供则针对图像回答具体问题。
 
-**Supported vision backends:**
+**支持的视觉后端：**
 
-Any OpenAI-compatible vision API works. Examples:
+任何 OpenAI 兼容的视觉 API 均可使用：
 
-| Provider | Model | Endpoint |
-|----------|-------|----------|
-| Alibaba Cloud (Bailian) | `qwen3-vl-plus` | `https://dashscope.aliyuncs.com/compatible-mode/v1` |
+| 提供商 | 模型 | 端点 |
+|--------|------|------|
+| 阿里云（百炼） | `qwen3-vl-plus` | `https://dashscope.aliyuncs.com/compatible-mode/v1` |
 | OpenAI | `gpt-4o` | `https://api.openai.com/v1` |
 | Groq | `meta-llama/llama-4-scout-17b-16e-instruct` | `https://api.groq.com/openai/v1` |
-| Local (Ollama) | `llama3.2-vision` | `http://localhost:11434/v1` |
+| 本地（Ollama） | `llama3.2-vision` | `http://localhost:11434/v1` |
 
-**Vision guard hook:**
+**Vision guard hook：**
 
-The `vision-guard.sh` PreToolUse hook provides deterministic enforcement -- when the model tries to `Read` an image file, the hook blocks it and redirects to `see_image` instead. This is more reliable than CLAUDE.md instructions alone.
+`vision-guard.sh` PreToolUse hook 提供确定性拦截 -- 当模型尝试 `Read` 图像文件时，hook 会阻止并重定向到 `see_image`。这比仅靠 CLAUDE.md 指令更可靠。
 
 <p align="center">
-  <img src="assets/vision-flow.svg" alt="Vision guard hook flow" width="100%"/>
+  <img src="assets/vision-flow.svg" alt="Vision guard hook 流程" width="100%"/>
 </p>
 
-Key properties:
-- Intercepts `Read` tool calls for image files (`.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.bmp`)
-- Only activates when `ANTHROPIC_BASE_URL` points to a non-Anthropic endpoint
-- Returns exit code 2 with instructions to use `see_image` instead
-- **No-op for native Claude Opus** (which has built-in multimodal vision)
+关键特性：
+- 拦截对图像文件的 `Read` 调用（`.png`、`.jpg`、`.jpeg`、`.gif`、`.webp`、`.bmp`）
+- 仅在 `ANTHROPIC_BASE_URL` 指向非 Anthropic 端点时激活
+- 返回 exit code 2 并指示使用 `see_image`
+- **对原生 Claude Opus 无效果**（其内置多模态视觉能力）
 
 </details>
 
-## Known limitations
+## 已知限制
 
-| Limitation | Workaround |
-|------------|------------|
-| Ctrl+V image paste may cause 400 error on text-only backends | Save image to file, use `see_image`; or use `see_clipboard` |
-| Session may be corrupted after image paste error ([#19031](https://github.com/anthropics/claude-code/issues/19031)) | `/rewind` or Esc twice to step back; if unrecoverable, start a new session |
-| DeepSeek API 503 during peak hours | `MAX_RETRIES=3` handles this automatically |
-| Coherence may degrade past 500K tokens | Use `/compact` in long sessions |
-| V4 thinking mode `reasoning_content` may 400 in multi-turn | Restart session if this occurs |
-| `claude-ds` cannot `/resume` sessions from `claude` (different backends) | Not fixable -- different API endpoints |
-| No native auto-fallback from Anthropic to DeepSeek | Not supported -- use `claude-ds` or `claude` separately |
-| Moving the cloned repo breaks the install | Re-run `./install.sh` to update paths |
+| 限制 | 解决方案 |
+|------|---------|
+| Ctrl+V 粘贴图片可能导致纯文本后端 400 错误 | 将图片保存为文件后使用 `see_image`；或使用 `see_clipboard` |
+| 图片粘贴错误后会话可能损坏（[#19031](https://github.com/anthropics/claude-code/issues/19031)） | `/rewind` 或按两次 Esc 回退；无法恢复则新建会话 |
+| DeepSeek API 高峰期 503 | `MAX_RETRIES=3` 自动处理 |
+| 超过 500K token 后连贯性可能下降 | 在长会话中使用 `/compact` |
+| V4 思考模式 `reasoning_content` 在多轮对话中可能 400 | 重启会话 |
+| `claude-ds` 无法 `/resume` 来自 `claude` 的会话 | 无法解决 -- 不同的 API 端点 |
+| 无法自动从 Anthropic 切换到 DeepSeek | 不支持 -- 分开使用 `claude-ds` 或 `claude` |
+| 移动克隆的仓库目录后安装失效 | 重新运行 `./install.sh` 更新路径 |
 
-## Uninstall
+## 卸载
 
 ```bash
 ./install.sh --uninstall
 ```
 
-Or manually:
-1. Remove the `claude-ds` / `claude-ds-flash` functions from `~/.zshrc` (or `~/.bashrc`)
-2. Remove `"vision"` entry from `~/.claude.json` (under `mcpServers`)
-3. Remove `"vision-guard"` hook from `~/.claude/settings.json`
-4. Remove `"mcp__vision"` from permissions in `~/.claude/settings.json`
-5. Remove Vision MCP lines from `~/.claude/CLAUDE.md`
+或手动操作：
+1. 从 `~/.zshrc`（或 `~/.bashrc`）中移除 `claude-ds` / `claude-ds-flash` 函数
+2. 从 `~/.claude.json` 中移除 `"vision"` 条目（在 `mcpServers` 下）
+3. 从 `~/.claude/settings.json` 中移除 `"vision-guard"` hook
+4. 从 `~/.claude/settings.json` 中移除 `"mcp__vision"` 权限
+5. 从 `~/.claude/CLAUDE.md` 中移除 Vision MCP 相关内容
 
-## License
+## 许可证
 
 MIT
 
 ---
 
-*All product names, logos, and brands are property of their respective owners. Use of these names does not imply endorsement.*
+*所有产品名称、标识和品牌均为其各自所有者的财产。使用这些名称不表示获得背书。*
 
-## Credits
+## 致谢
 
 - [Claude Code](https://code.claude.com/docs/en/overview) by Anthropic
 - [DeepSeek V4](https://api-docs.deepseek.com/) by DeepSeek
-- Vision MCP server forked from [clipboard-vision-mcp](https://github.com/Capetlevrai/clipboard-vision-mcp) by Capetlevrai
+- Vision MCP server fork 自 [clipboard-vision-mcp](https://github.com/Capetlevrai/clipboard-vision-mcp) by Capetlevrai
