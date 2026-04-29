@@ -37,33 +37,37 @@ claude-ds          # V4-Pro -- complex coding, architecture, refactoring
 claude-ds-flash    # V4-Flash -- quick fixes, simple tasks
 ```
 
-## How it works
+## Architecture
 
-```
-Terminal
-  |
-  +-- claude          (native Anthropic Opus)
-  +-- claude-ds       (DeepSeek V4-Pro via Anthropic-compatible endpoint)
-  +-- claude-ds-flash (DeepSeek V4-Flash, all tiers)
-        |
-        v
-  Claude Code Harness (unmodified black box)
-        |
-        +-- Environment Variables (the only config interface)
-        |     7 model routing vars + 3 behavior control vars
-        |
-        +-- PreToolUse Hook: vision-guard.sh
-        |     Blocks image Read on text-only backends
-        |     Guides model to use Vision MCP instead
-        |     No-op when running native Opus
-        |
-        +-- MCP Server: vision-mcp
-        |     see_image    -- analyze image file on disk
-        |     see_clipboard -- analyze clipboard image
-        |     Backend: any OpenAI-compatible vision API
-        |
-        +-- CLAUDE.md instructions
-              Soft guidance for paste failures & clipboard usage
+```mermaid
+graph TB
+    subgraph Terminal
+        A["claude<br/><i>native Opus</i>"]
+        B["claude-ds<br/><i>V4-Pro main + Flash sub</i>"]
+        C["claude-ds-flash<br/><i>Flash all tiers</i>"]
+    end
+
+    subgraph Harness["Claude Code Harness &nbsp;(unmodified black box)"]
+        ENV["<b>Environment Variables</b><br/>7 model routing + 3 behavior control"]
+        HOOK["<b>PreToolUse Hook</b><br/>vision-guard.sh"]
+        MCP["<b>Vision MCP Server</b><br/>see_image / see_clipboard"]
+        MD["<b>CLAUDE.md</b><br/>Soft guidance for paste failures"]
+    end
+
+    subgraph Backends
+        ANTH["Anthropic API<br/><i>api.anthropic.com</i>"]
+        DS["DeepSeek API<br/><i>api.deepseek.com/anthropic</i>"]
+        VIS["Vision API<br/><i>any OpenAI-compatible</i>"]
+    end
+
+    A --> Harness
+    B --> Harness
+    C --> Harness
+
+    ENV -. "ANTHROPIC_BASE_URL" .-> DS
+    ENV -. "default" .-> ANTH
+    MCP -- "image analysis" --> VIS
+    HOOK -- "blocks image Read<br/>on text-only backends" --> MCP
 ```
 
 ## Environment variables (audited)
@@ -86,19 +90,26 @@ These variables were identified by reverse-engineering Claude Code v2.1.71's bin
 
 ## Model tier strategy
 
+```mermaid
+graph LR
+    subgraph "claude-ds &nbsp;(Pro mode)"
+        direction LR
+        P_MAIN["Main conversation<br/>Opus tier"] -- "deepseek-v4-pro[1m]" --> P_PRO["<b>V4-Pro</b><br/>1M context"]
+        P_SON["Sonnet tier"] -- "deepseek-v4-flash" --> P_FLASH["<b>V4-Flash</b><br/>200K context"]
+        P_HAIKU["Haiku tier"] -- "deepseek-v4-flash" --> P_FLASH
+        P_SMALL["Small/fast tasks<br/><i>14 internal uses</i>"] -- "deepseek-v4-flash" --> P_FLASH
+        P_SUB["Subagents"] -- "deepseek-v4-flash" --> P_FLASH
+    end
 ```
-claude-ds (Pro mode):
-  Main conversation  -->  deepseek-v4-pro[1m]   (1M context, full power)
-  Sonnet tier        -->  deepseek-v4-flash      (cost savings)
-  Haiku tier         -->  deepseek-v4-flash      (cost savings)
-  Small/fast tasks   -->  deepseek-v4-flash      (14 internal uses)
-  Subagents          -->  deepseek-v4-flash      (cost savings)
-
-claude-ds-flash (Flash mode):
-  All tiers          -->  deepseek-v4-flash      (200K context, maximum savings)
+```mermaid
+graph LR
+    subgraph "claude-ds-flash &nbsp;(Flash mode)"
+        direction LR
+        F_ALL["All tiers"] -- "deepseek-v4-flash" --> F_FLASH["<b>V4-Flash</b><br/>200K context<br/>maximum savings"]
+    end
 ```
 
-Context windows: V4 defaults to 200K. The `[1m]` suffix extends to 1M tokens (same per-token price).
+> Context windows: V4 defaults to **200K**. The `[1m]` suffix extends to **1M tokens** (same per-token price).
 
 ## Vision MCP server
 
@@ -126,6 +137,24 @@ Any OpenAI-compatible vision API works. Examples:
 
 The `vision-guard.sh` PreToolUse hook provides **100% enforcement** (vs ~70% CLAUDE.md compliance):
 
+```mermaid
+flowchart TD
+    A["Model calls Read tool<br/>with image file path"] --> B{ANTHROPIC_BASE_URL<br/>points to Anthropic?}
+    B -- "Yes (native Opus)" --> C["Allow Read<br/>Opus has built-in vision"]
+    B -- "No (DeepSeek, etc.)" --> D{File extension is<br/>png/jpg/gif/webp/bmp?}
+    D -- No --> E["Allow Read<br/>not an image file"]
+    D -- Yes --> F["BLOCK (exit 2)<br/>Return guidance message"]
+    F --> G["Model calls<br/>mcp__vision__see_image<br/>with same path"]
+    G --> H["Vision MCP forwards<br/>to vision API backend"]
+    H --> I["Returns text description<br/>to the model"]
+
+    style F fill:#fee,stroke:#c00
+    style C fill:#efe,stroke:#0a0
+    style E fill:#efe,stroke:#0a0
+    style I fill:#eef,stroke:#00c
+```
+
+Key properties:
 - Intercepts `Read` tool calls for image files (`.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.bmp`)
 - Only activates when `ANTHROPIC_BASE_URL` points to a non-Anthropic endpoint
 - Returns exit code 2 with instructions to use `see_image` instead
