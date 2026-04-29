@@ -123,25 +123,37 @@ ok "Shell config: $SHELL_RC"
 echo ""
 
 # --- Collect API keys ---
-# DeepSeek API key
+echo "-----------------------------------------"
+echo "  Step 1: DeepSeek API key (required)"
+echo "-----------------------------------------"
+echo ""
 if [ -z "${DEEPSEEK_API_KEY:-}" ]; then
-  echo "DeepSeek API key (get one at https://platform.deepseek.com/api_keys):"
+  echo "Get your key at: https://platform.deepseek.com/api_keys"
+  echo "(input is hidden for security)"
+  echo ""
   read -rsp "  DEEPSEEK_API_KEY: " ds_key
   echo ""
   if [ -z "$ds_key" ]; then
     error "DeepSeek API key is required."
     exit 1
   fi
+  ok "Key received"
 else
   ds_key="$DEEPSEEK_API_KEY"
   ok "Using DEEPSEEK_API_KEY from environment"
 fi
 
-# Vision API key (optional)
 echo ""
-echo "Vision API (optional -- enables image analysis for text-only models)."
-echo "Any OpenAI-compatible vision API works (Qwen VL, GPT-4o, Groq, local Ollama, etc.)."
+echo "-----------------------------------------"
+echo "  Step 2: Vision API key (optional)"
+echo "-----------------------------------------"
+echo ""
+echo "Enables image analysis for text-only models."
+echo "Any OpenAI-compatible vision API works."
+echo "Examples: Alibaba Qwen VL, OpenAI GPT-4o, Groq Llama Vision, local Ollama."
+echo ""
 echo "Press Enter to skip if you don't need vision support."
+echo "(input is hidden for security)"
 echo ""
 read -rsp "  VISION_API_KEY: " vision_key
 echo ""
@@ -149,8 +161,10 @@ echo ""
 vision_base=""
 vision_model=""
 if [ -n "$vision_key" ]; then
+  ok "Key received"
+  echo ""
   read -rp "  VISION_BASE_URL (e.g., https://api.openai.com/v1): " vision_base
-  read -rp "  VISION_MODEL (e.g., gpt-4o, qwen-vl-plus): " vision_model
+  read -rp "  VISION_MODEL (e.g., gpt-4o, qwen3-vl-plus): " vision_model
   : "${vision_model:=gpt-4o}"
 fi
 
