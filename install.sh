@@ -6,7 +6,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLAUDE_DIR="$HOME/.claude"
-MCP_INSTALL_DIR="$CLAUDE_DIR/mcp-servers/vision"
+CLAUDE_JSON="$HOME/.claude.json"
+MCP_INSTALL_DIR="$SCRIPT_DIR/vision-mcp"
 SHELL_RC=""
 
 # Colors (disabled if not a terminal)
@@ -36,19 +37,24 @@ if [[ "${1:-}" == "--uninstall" ]]; then
     fi
   done
 
-  # Remove MCP server
-  if [ -d "$MCP_INSTALL_DIR" ]; then
-    rm -rf "$MCP_INSTALL_DIR"
-    ok "Removed Vision MCP server"
+  # Remove vision MCP from ~/.claude.json
+  if [ -f "$CLAUDE_JSON" ] && jq -e '.mcpServers.vision' "$CLAUDE_JSON" &>/dev/null; then
+    jq 'del(.mcpServers.vision)' "$CLAUDE_JSON" > "$CLAUDE_JSON.tmp" \
+      && mv "$CLAUDE_JSON.tmp" "$CLAUDE_JSON"
+    ok "Removed vision server from $CLAUDE_JSON"
   fi
 
-  # Note: we don't auto-modify mcp.json, settings.json, or CLAUDE.md
-  # because users may have other customizations
+  # Also clean up legacy ~/.claude/mcp.json if present
+  if [ -f "$CLAUDE_DIR/mcp.json" ] && jq -e '.mcpServers.vision' "$CLAUDE_DIR/mcp.json" &>/dev/null; then
+    jq 'del(.mcpServers.vision)' "$CLAUDE_DIR/mcp.json" > "$CLAUDE_DIR/mcp.json.tmp" \
+      && mv "$CLAUDE_DIR/mcp.json.tmp" "$CLAUDE_DIR/mcp.json"
+    ok "Removed vision server from $CLAUDE_DIR/mcp.json (legacy)"
+  fi
+
   warn "Manual cleanup needed:"
-  warn "  1. Remove 'vision' entry from $CLAUDE_DIR/mcp.json"
-  warn "  2. Remove vision-guard hook from $CLAUDE_DIR/settings.json"
-  warn "  3. Remove Vision MCP section from $CLAUDE_DIR/CLAUDE.md"
-  warn "  4. Remove 'mcp__vision' from permissions in $CLAUDE_DIR/settings.json"
+  warn "  1. Remove vision-guard hook from $CLAUDE_DIR/settings.json"
+  warn "  2. Remove Vision MCP section from $CLAUDE_DIR/CLAUDE.md"
+  warn "  3. Remove 'mcp__vision' from permissions in $CLAUDE_DIR/settings.json"
   echo "Done."
   exit 0
 fi
@@ -195,62 +201,49 @@ ok "Added claude-ds and claude-ds-flash to $SHELL_RC"
 if [ -n "$vision_key" ]; then
   info "Installing Vision MCP server..."
 
-  mkdir -p "$MCP_INSTALL_DIR"
-
-  # Create venv and install
+  # Create venv in repo directory (single source of truth)
   if [ ! -d "$MCP_INSTALL_DIR/.venv" ]; then
     python3 -m venv "$MCP_INSTALL_DIR/.venv"
   fi
-
-  # Copy source
-  cp -r "$SCRIPT_DIR/vision-mcp/clipboard_vision_mcp" "$MCP_INSTALL_DIR/"
-  cp "$SCRIPT_DIR/vision-mcp/pyproject.toml" "$MCP_INSTALL_DIR/"
 
   # Install dependencies
   "$MCP_INSTALL_DIR/.venv/bin/pip" install -q -e "$MCP_INSTALL_DIR"
 
   ok "Vision MCP server installed at $MCP_INSTALL_DIR"
 
-  # --- Configure MCP in Claude ---
-  info "Configuring MCP server..."
+  # --- Configure MCP in ~/.claude.json (Claude Code's actual config) ---
+  info "Configuring MCP server in $CLAUDE_JSON..."
 
-  MCP_JSON="$CLAUDE_DIR/mcp.json"
   PYTHON_PATH="$MCP_INSTALL_DIR/.venv/bin/python"
 
-  if [ -f "$MCP_JSON" ]; then
-    # Add vision entry to existing mcp.json
-    if jq -e '.mcpServers.vision' "$MCP_JSON" &>/dev/null; then
-      warn "Vision MCP already configured in $MCP_JSON (skipping)"
-    else
-      jq --arg py "$PYTHON_PATH" \
-         --arg key "$vision_key" \
-         --arg base "$vision_base" \
-         --arg model "$vision_model" \
-         '.mcpServers.vision = {
-           "command": $py,
-           "args": ["-m", "clipboard_vision_mcp.server"],
-           "env": {
-             "VISION_API_KEY": $key,
-             "VISION_BASE_URL": $base,
-             "VISION_MODEL": $model
-           },
-           "description": "Image analysis via vision model (gives text-only LLMs vision capability)"
-         }' "$MCP_JSON" > "$MCP_JSON.tmp" && mv "$MCP_JSON.tmp" "$MCP_JSON"
-      ok "Added vision server to $MCP_JSON"
-    fi
+  if [ ! -f "$CLAUDE_JSON" ]; then
+    # Create minimal ~/.claude.json if it doesn't exist
+    echo '{"mcpServers":{}}' > "$CLAUDE_JSON"
+  fi
+
+  if jq -e '.mcpServers.vision' "$CLAUDE_JSON" &>/dev/null; then
+    warn "Vision MCP already configured in $CLAUDE_JSON (skipping)"
   else
-    # Create new mcp.json
-    jq -n --arg py "$PYTHON_PATH" \
+    # Ensure mcpServers key exists
+    if ! jq -e '.mcpServers' "$CLAUDE_JSON" &>/dev/null; then
+      jq '.mcpServers = {}' "$CLAUDE_JSON" > "$CLAUDE_JSON.tmp" \
+        && mv "$CLAUDE_JSON.tmp" "$CLAUDE_JSON"
+    fi
+
+    jq --arg py "$PYTHON_PATH" \
        --arg key "$vision_key" \
        --arg base "$vision_base" \
        --arg model "$vision_model" \
-       '{mcpServers: {vision: {
-          command: $py,
-          args: ["-m", "clipboard_vision_mcp.server"],
-          env: {VISION_API_KEY: $key, VISION_BASE_URL: $base, VISION_MODEL: $model},
-          description: "Image analysis via vision model (gives text-only LLMs vision capability)"
-        }}}' > "$MCP_JSON"
-    ok "Created $MCP_JSON"
+       '.mcpServers.vision = {
+         "command": $py,
+         "args": ["-m", "clipboard_vision_mcp.server"],
+         "env": {
+           "VISION_API_KEY": $key,
+           "VISION_BASE_URL": $base,
+           "VISION_MODEL": $model
+         }
+       }' "$CLAUDE_JSON" > "$CLAUDE_JSON.tmp" && mv "$CLAUDE_JSON.tmp" "$CLAUDE_JSON"
+    ok "Added vision server to $CLAUDE_JSON"
   fi
 
   # --- Configure settings.json ---

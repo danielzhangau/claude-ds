@@ -151,9 +151,9 @@ Key properties:
 
 Or manually:
 1. Remove the `claude-ds` / `claude-ds-flash` functions from `~/.zshrc` (or `~/.bashrc`)
-2. Remove `"vision"` entry from `~/.claude/mcp.json`
+2. Remove `"vision"` entry from `~/.claude.json` (under `mcpServers`)
 3. Remove `"vision-guard"` hook from `~/.claude/settings.json`
-4. Remove `~/.claude/mcp-servers/vision/` directory
+4. Remove `"mcp__vision"` from permissions in `~/.claude/settings.json`
 5. Remove Vision MCP lines from `~/.claude/CLAUDE.md`
 
 ## License

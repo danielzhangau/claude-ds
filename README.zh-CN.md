@@ -151,9 +151,9 @@ DeepSeek V4 是纯文本模型，无法识别图像。Vision MCP 服务器通过
 
 或手动操作：
 1. 从 `~/.zshrc`（或 `~/.bashrc`）中移除 `claude-ds` / `claude-ds-flash` 函数
-2. 从 `~/.claude/mcp.json` 中移除 `"vision"` 条目
+2. 从 `~/.claude.json` 中移除 `"vision"` 条目（在 `mcpServers` 下）
 3. 从 `~/.claude/settings.json` 中移除 `"vision-guard"` hook
-4. 删除 `~/.claude/mcp-servers/vision/` 目录
+4. 从 `~/.claude/settings.json` 中移除 `"mcp__vision"` 权限
 5. 从 `~/.claude/CLAUDE.md` 中移除 Vision MCP 相关内容
 
 ## 许可证
