@@ -2,7 +2,7 @@
 
 > Use DeepSeek V4 as a drop-in backend for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) -- same harness, fraction of the cost.
 
-Claude Code's harness (five-layer context compression, Agent Teams, 24+ tools, Git integration) is what makes it powerful -- the model is swappable. This project packages a production-ready DeepSeek V4 configuration with:
+Claude Code's harness (multi-layer context compression, Agent Teams, 24 tools, Git integration) is what makes it powerful -- the model is swappable. This project packages a production-ready DeepSeek V4 configuration with:
 
 - **Optimized environment variables** audited against Claude Code's binary (50+ vars checked, critical ones identified)
 - **Vision MCP server** that gives text-only models the ability to see images via any OpenAI-compatible vision API
@@ -17,7 +17,7 @@ Claude Code's harness (five-layer context compression, Agent Teams, 24+ tools, G
 | DeepSeek V4-Pro | $0.87* | **~29x cheaper** |
 | DeepSeek V4-Flash | $0.28 | **~89x cheaper** |
 
-\* V4-Pro 75% launch discount effective through May 31, 2026. Regular price: $3.48/M.
+\* V4-Pro 75% launch discount effective through May 5, 2026 15:59 UTC. Regular price: $3.48/M.
 
 ## Quick start
 
@@ -55,7 +55,7 @@ These variables were identified by reverse-engineering Claude Code v2.1.71's bin
 | `ANTHROPIC_DEFAULT_OPUS_MODEL` | Opus tier mapping | Uses `claude-opus-*` |
 | `ANTHROPIC_DEFAULT_SONNET_MODEL` | Sonnet tier mapping | Uses `claude-sonnet-*` |
 | `ANTHROPIC_DEFAULT_HAIKU_MODEL` | Haiku tier mapping | Uses `claude-haiku-*` |
-| **`ANTHROPIC_SMALL_FAST_MODEL`** | **Internal lightweight tasks (14 refs in binary!)** | **Uses `claude-haiku-*` -- silent failures** |
+| **`ANTHROPIC_SMALL_FAST_MODEL`** | **Internal lightweight tasks (many refs in binary)** | **Uses `claude-haiku-*` -- silent failures** |
 | `CLAUDE_CODE_SUBAGENT_MODEL` | Agent tool subagents | Falls back to Sonnet tier |
 | `CLAUDE_CODE_MAX_RETRIES` | API retry on 503 | 0 retries (immediate failure) |
 | `CLAUDE_CODE_DISABLE_LEGACY_MODEL_REMAP` | Prevent model name remapping | May corrupt `deepseek-v4-*` names |
@@ -86,12 +86,12 @@ Any OpenAI-compatible vision API works. Examples:
 |----------|-------|----------|
 | Alibaba Cloud (Bailian) | `qwen-vl-plus` | `https://dashscope.aliyuncs.com/compatible-mode/v1` |
 | OpenAI | `gpt-4o` | `https://api.openai.com/v1` |
-| Groq | `llama-4-scout-17b-16e-instruct` | `https://api.groq.com/openai/v1` |
+| Groq | `meta-llama/llama-4-scout-17b-16e-instruct` | `https://api.groq.com/openai/v1` |
 | Local (Ollama) | `llava` | `http://localhost:11434/v1` |
 
 ### Vision guard hook
 
-The `vision-guard.sh` PreToolUse hook provides **100% enforcement** (vs ~70% CLAUDE.md compliance):
+The `vision-guard.sh` PreToolUse hook provides **deterministic enforcement** (vs probabilistic CLAUDE.md compliance):
 
 <p align="center">
   <img src="assets/vision-flow.svg" alt="Vision guard hook flow" width="100%"/>
@@ -110,10 +110,10 @@ Key properties:
 | Ctrl+V image paste may cause 400 error on text-only backends | Save image to file, use `see_image`; or use `see_clipboard` |
 | Session may be corrupted after image paste error ([#16169](https://github.com/anthropics/claude-code/issues/16169)) | Start a new session |
 | DeepSeek API 503 during peak hours | `MAX_RETRIES=3` handles this automatically |
-| Coherence degrades past 500K tokens | Use `/compact` in long sessions |
+| Coherence may degrade past 500K tokens | Use `/compact` in long sessions |
 | V4 thinking mode `reasoning_content` may 400 in multi-turn | Restart session if this occurs |
 | `claude-ds` cannot `/resume` sessions from `claude` (different backends) | Not fixable -- different API endpoints |
-| No native auto-fallback from Anthropic to DeepSeek | Intentional by Anthropic (commercial reasons) |
+| No native auto-fallback from Anthropic to DeepSeek | Not supported -- use `claude-ds` or `claude` separately |
 
 ## Uninstall
 

@@ -62,7 +62,7 @@
 
   <!-- Enforcement comparison box (wider with padding) -->
   <rect x="316" y="278" width="288" height="38" rx="6" fill="none" stroke="#30363d" stroke-width="1" stroke-dasharray="3 2"/>
-  <text x="460" y="302" class="note" text-anchor="middle">100% hook enforcement  >  ~70% CLAUDE.md</text>
+  <text x="460" y="302" class="note" text-anchor="middle">deterministic hook  >  probabilistic CLAUDE.md</text>
 
   <!-- ============ Arrows: Harness -> Backends ============ -->
 

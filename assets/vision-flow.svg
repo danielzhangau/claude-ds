@@ -70,7 +70,7 @@
   <rect x="24" y="118" width="164" height="60" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
   <text x="106" y="140" class="node-label" text-anchor="middle">vision-guard.sh</text>
   <text x="106" y="156" class="annotation" text-anchor="middle">PreToolUse hook</text>
-  <text x="106" y="170" class="annotation" text-anchor="middle">100% enforcement</text>
+  <text x="106" y="170" class="annotation" text-anchor="middle">deterministic</text>
 
   <!-- Connector: annotation -> decision 1 -->
   <line x1="188" y1="148" x2="220" y2="148" stroke="#30363d" stroke-width="1" stroke-dasharray="3 2"/>
