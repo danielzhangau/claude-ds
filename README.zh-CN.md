@@ -142,6 +142,7 @@ DeepSeek V4 是纯文本模型，无法识别图像。Vision MCP 服务器通过
 | V4 思考模式 `reasoning_content` 在多轮对话中可能 400 | 重启会话 |
 | `claude-ds` 无法 `/resume` 来自 `claude` 的会话 | 无法解决 -- 不同的 API 端点 |
 | 无法自动从 Anthropic 切换到 DeepSeek | 不支持 -- 分开使用 `claude-ds` 或 `claude` |
+| 移动克隆的仓库目录后安装失效 | 重新运行 `./install.sh` 更新路径 |
 
 ## 卸载
 

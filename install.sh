@@ -68,7 +68,8 @@ echo ""
 # Check claude CLI
 if ! command -v claude &>/dev/null; then
   error "Claude Code CLI not found. Install it first:"
-  error "  npm install -g @anthropic-ai/claude-code"
+  error "  curl -fsSL https://claude.ai/install.sh | bash"
+  error "  (or: npm install -g @anthropic-ai/claude-code)"
   exit 1
 fi
 ok "Claude Code CLI found: $(which claude)"
@@ -271,7 +272,13 @@ if [ -n "$vision_key" ]; then
       ok "Added vision-guard hook"
     fi
   else
-    warn "$SETTINGS_JSON not found. Create it manually or copy from examples/."
+    # Create minimal settings.json for fresh installs
+    jq -n --arg cmd "$HOOK_PATH" \
+       '{
+         permissions: {allow: ["mcp__vision"]},
+         hooks: {PreToolUse: [{matcher: "Read", hooks: [{type: "command", command: $cmd, timeout: 5}]}]}
+       }' > "$SETTINGS_JSON"
+    ok "Created $SETTINGS_JSON with vision-guard hook and permissions"
   fi
 
   # --- Add CLAUDE.md instructions ---

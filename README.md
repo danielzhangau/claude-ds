@@ -142,6 +142,7 @@ Key properties:
 | V4 thinking mode `reasoning_content` may 400 in multi-turn | Restart session if this occurs |
 | `claude-ds` cannot `/resume` sessions from `claude` (different backends) | Not fixable -- different API endpoints |
 | No native auto-fallback from Anthropic to DeepSeek | Not supported -- use `claude-ds` or `claude` separately |
+| Moving the cloned repo breaks the install | Re-run `./install.sh` to update paths |
 
 ## Uninstall
 
