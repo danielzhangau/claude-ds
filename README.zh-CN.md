@@ -2,6 +2,10 @@
 
 [English](./README.md) | **中文**
 
+<p align="center">
+  <img src="assets/banner.png" alt="claude-ds banner" width="100%">
+</p>
+
 > 用 DeepSeek V4 作为 [Claude Code](https://code.claude.com/docs/en/overview) 的后端 -- 同样的工具，几分之一的价格。
 
 ## 这是什么？
@@ -160,6 +164,10 @@ DeepSeek V4 是纯文本模型，无法识别图像。Vision MCP 服务器通过
 ## 许可证
 
 MIT
+
+---
+
+*所有产品名称、标识和品牌均为其各自所有者的财产。使用这些名称不表示获得背书。*
 
 ## 致谢
 

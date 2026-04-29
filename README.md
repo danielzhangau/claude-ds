@@ -2,6 +2,10 @@
 
 **English** | [中文](./README.zh-CN.md)
 
+<p align="center">
+  <img src="assets/banner.png" alt="claude-ds banner" width="100%">
+</p>
+
 > Use DeepSeek V4 as a drop-in backend for [Claude Code](https://code.claude.com/docs/en/overview) -- same tool, fraction of the cost.
 
 ## What is this?
@@ -160,6 +164,10 @@ Or manually:
 ## License
 
 MIT
+
+---
+
+*All product names, logos, and brands are property of their respective owners. Use of these names does not imply endorsement.*
 
 ## Credits
 
