@@ -74,20 +74,6 @@ if ! command -v claude &>/dev/null; then
 fi
 ok "Claude Code CLI found: $(which claude)"
 
-# Check Python 3.10+
-if ! command -v python3 &>/dev/null; then
-  error "Python 3 not found. Install Python 3.10 or later."
-  exit 1
-fi
-PY_VERSION=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
-PY_MAJOR=$(echo "$PY_VERSION" | cut -d. -f1)
-PY_MINOR=$(echo "$PY_VERSION" | cut -d. -f2)
-if [ "$PY_MAJOR" -lt 3 ] || { [ "$PY_MAJOR" -eq 3 ] && [ "$PY_MINOR" -lt 10 ]; }; then
-  error "Python 3.10+ required (found $PY_VERSION)"
-  exit 1
-fi
-ok "Python $PY_VERSION"
-
 # Check jq (needed by vision-guard hook)
 if ! command -v jq &>/dev/null; then
   warn "jq not found. Installing..."
@@ -200,6 +186,20 @@ ok "Added claude-ds and claude-ds-flash to $SHELL_RC"
 
 # --- Install Vision MCP server ---
 if [ -n "$vision_key" ]; then
+  # Check Python 3.10+ (only needed for Vision MCP)
+  if ! command -v python3 &>/dev/null; then
+    error "Python 3 not found. Vision MCP requires Python 3.10 or later."
+    exit 1
+  fi
+  PY_VERSION=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+  PY_MAJOR=$(echo "$PY_VERSION" | cut -d. -f1)
+  PY_MINOR=$(echo "$PY_VERSION" | cut -d. -f2)
+  if [ "$PY_MAJOR" -lt 3 ] || { [ "$PY_MAJOR" -eq 3 ] && [ "$PY_MINOR" -lt 10 ]; }; then
+    error "Python 3.10+ required for Vision MCP (found $PY_VERSION)"
+    exit 1
+  fi
+  ok "Python $PY_VERSION"
+
   info "Installing Vision MCP server..."
 
   # Create venv in repo directory (single source of truth)

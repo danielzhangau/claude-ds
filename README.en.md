@@ -92,6 +92,8 @@ These variables were identified by reverse-engineering Claude Code v2.1.71's bin
 
 You don't need to set these manually -- `install.sh` handles everything. This table is for understanding what's happening under the hood.
 
+> **Note**: Default model names (`deepseek-v4-pro[1m]`, `deepseek-v4-flash`) may change as DeepSeek updates their API. Refer to the [DeepSeek official docs](https://api-docs.deepseek.com/) for current model names. Override via `CLAUDE_DS_PRO_MODEL` / `CLAUDE_DS_FLASH_MODEL` environment variables.
+
 </details>
 
 <details>

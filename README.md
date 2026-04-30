@@ -94,6 +94,8 @@ claude-ds-flash    # V4-Flash -- 小改动、简单任务
 
 这些不用手动配 -- `install.sh` 全部搞定了。这张表只是方便你了解底层在干嘛。
 
+> **注意**：默认模型名（`deepseek-v4-pro[1m]`、`deepseek-v4-flash`）可能随 DeepSeek API 更新而变化，请以 [DeepSeek 官方文档](https://api-docs.deepseek.com/) 为准。可通过 `CLAUDE_DS_PRO_MODEL` / `CLAUDE_DS_FLASH_MODEL` 环境变量覆盖。
+
 </details>
 
 <details>
