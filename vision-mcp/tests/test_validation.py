@@ -5,7 +5,6 @@ Covers _validate_image_path (extension, size, existence) and _validate_magic
 arbitrary file reads and ensure only real image data is processed.
 """
 
-import os
 import tempfile
 from pathlib import Path
 
@@ -18,10 +17,10 @@ from clipboard_vision_mcp.server import (
     _validate_magic,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def tmp_dir():
@@ -37,6 +36,7 @@ def _write_file(path: Path, content: bytes) -> Path:
 # ---------------------------------------------------------------------------
 # _validate_image_path
 # ---------------------------------------------------------------------------
+
 
 class TestValidateImagePath:
     """Tests for path validation: extension whitelist, size limit, existence."""
@@ -96,6 +96,7 @@ class TestValidateImagePath:
 # ---------------------------------------------------------------------------
 # _validate_magic
 # ---------------------------------------------------------------------------
+
 
 class TestValidateMagic:
     """Tests for magic bytes verification."""

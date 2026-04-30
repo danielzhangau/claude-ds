@@ -18,16 +18,17 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import contextlib
 import os
 from pathlib import Path
 from typing import Any
 
 import aiofiles
 import httpx
-from openai import AsyncOpenAI
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import TextContent, Tool
+from openai import AsyncOpenAI
 
 from .clipboard import ClipboardError, save_clipboard_image
 
@@ -45,11 +46,11 @@ ALLOWED_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp"}
 MAX_IMAGE_BYTES = 20 * 1024 * 1024  # 20 MB
 IMAGE_MAGIC_PREFIXES = (
     b"\x89PNG\r\n\x1a\n",  # PNG
-    b"\xff\xd8\xff",        # JPEG
+    b"\xff\xd8\xff",  # JPEG
     b"GIF87a",
     b"GIF89a",
-    b"RIFF",                # WEBP (RIFF....WEBP)
-    b"BM",                  # BMP
+    b"RIFF",  # WEBP (RIFF....WEBP)
+    b"BM",  # BMP
 )
 
 API_TIMEOUT = int(os.environ.get("VISION_TIMEOUT", "45"))  # seconds
@@ -94,8 +95,12 @@ class VisionClient:
 
         suffix = p.suffix.lower()
         mime = {
-            ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
-            ".gif": "image/gif", ".webp": "image/webp", ".bmp": "image/bmp",
+            ".png": "image/png",
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".gif": "image/gif",
+            ".webp": "image/webp",
+            ".bmp": "image/bmp",
         }.get(suffix, "image/png")
         b64 = base64.b64encode(data).decode("utf-8")
 
@@ -195,25 +200,27 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
             try:
                 text = await vision_client.see(path, question)
             finally:
-                try:
+                with contextlib.suppress(OSError):
                     os.unlink(path)
-                except OSError:
-                    pass
         else:
             text = f"Unknown tool: {name}"
 
         return [TextContent(type="text", text=text)]
     except httpx.TimeoutException:
-        return [TextContent(
-            type="text",
-            text=f"Error: Vision API timed out after {API_TIMEOUT}s. "
-            "The image may be too large or the API is overloaded. Try again.",
-        )]
+        return [
+            TextContent(
+                type="text",
+                text=f"Error: Vision API timed out after {API_TIMEOUT}s. "
+                "The image may be too large or the API is overloaded. Try again.",
+            )
+        ]
     except httpx.ConnectError:
-        return [TextContent(
-            type="text",
-            text="Error: Cannot connect to vision API. Check network and VISION_BASE_URL.",
-        )]
+        return [
+            TextContent(
+                type="text",
+                text="Error: Cannot connect to vision API. Check network and VISION_BASE_URL.",
+            )
+        ]
     except Exception as e:
         return [TextContent(type="text", text=f"Vision API error: {type(e).__name__}: {e}")]
 
@@ -227,14 +234,10 @@ async def main() -> None:
     if vision_key:
         vision_client = VisionClient(api_key=vision_key, base_url=vision_base)
     elif groq_key:
-        vision_client = VisionClient(
-            api_key=groq_key, base_url="https://api.groq.com/openai/v1"
-        )
+        vision_client = VisionClient(api_key=groq_key, base_url="https://api.groq.com/openai/v1")
 
     async with stdio_server() as (read_stream, write_stream):
-        await server.run(
-            read_stream, write_stream, server.create_initialization_options()
-        )
+        await server.run(read_stream, write_stream, server.create_initialization_options())
 
 
 def run() -> None:

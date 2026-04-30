@@ -49,7 +49,7 @@ def save_clipboard_image() -> str:
 
 def _grab_with_pil(out: Path) -> None:
     try:
-        from PIL import ImageGrab, Image  # type: ignore
+        from PIL import Image, ImageGrab  # type: ignore
     except ImportError as e:
         raise ClipboardError(
             "Pillow is required for clipboard image support. Run: pip install Pillow"
@@ -72,9 +72,7 @@ def _grab_with_pil(out: Path) -> None:
 
 def _grab_macos_pngpaste(out: Path) -> None:
     try:
-        result = subprocess.run(
-            ["pngpaste", str(out)], capture_output=True, timeout=10
-        )
+        result = subprocess.run(["pngpaste", str(out)], capture_output=True, timeout=10)
     except FileNotFoundError as e:
         raise ClipboardError(
             "No image in clipboard. Install `pngpaste` for better support: brew install pngpaste"
