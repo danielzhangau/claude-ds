@@ -53,8 +53,8 @@ if [[ "${1:-}" == "--uninstall" ]]; then
 
   warn "Manual cleanup needed:"
   warn "  1. Remove vision-guard hook from $CLAUDE_DIR/settings.json"
-  warn "  2. Remove Vision MCP section from $CLAUDE_DIR/CLAUDE.md"
-  warn "  3. Remove 'mcp__vision' from permissions in $CLAUDE_DIR/settings.json"
+  warn "  2. Remove 'mcp__vision' from permissions in $CLAUDE_DIR/settings.json"
+  warn "  3. Remove Vision MCP hint from $CLAUDE_DIR/CLAUDE.md"
   echo "Done."
   exit 0
 fi
@@ -281,19 +281,19 @@ if [ -n "$vision_key" ]; then
     ok "Created $SETTINGS_JSON with vision-guard hook and permissions"
   fi
 
-  # --- Add CLAUDE.md instructions ---
+  # --- Add CLAUDE.md hint ---
   CLAUDE_MD="$CLAUDE_DIR/CLAUDE.md"
   if [ -f "$CLAUDE_MD" ]; then
     if ! grep -q "mcp__vision__see_image" "$CLAUDE_MD"; then
       echo "" >> "$CLAUDE_MD"
       cat "$SCRIPT_DIR/examples/claude-md-additions.md" >> "$CLAUDE_MD"
-      ok "Added Vision MCP instructions to $CLAUDE_MD"
+      ok "Added Vision MCP hint to $CLAUDE_MD"
     else
-      warn "Vision MCP instructions already in $CLAUDE_MD (skipping)"
+      warn "Vision MCP hint already in $CLAUDE_MD (skipping)"
     fi
   else
     cp "$SCRIPT_DIR/examples/claude-md-additions.md" "$CLAUDE_MD"
-    ok "Created $CLAUDE_MD with Vision MCP instructions"
+    ok "Created $CLAUDE_MD with Vision MCP hint"
   fi
 
   ok "Vision support fully configured"
