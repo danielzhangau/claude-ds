@@ -14,7 +14,7 @@ You should receive an acknowledgment within 72 hours.
 
 Security-relevant areas in this project include:
 
-- **API key handling** -- keys are stored in `~/.zshrc` (or `~/.bashrc`) and `~/.claude.json`
+- **API key handling** -- keys are stored in `~/.zshrc` (or `~/.bashrc`) and `~/.claude/claude-ds-vision-mcp.json`
 - **Image path validation** -- `_validate_image_path` and `_validate_magic` in `vision-mcp/clipboard_vision_mcp/server.py`
 - **Clipboard access** -- `vision-mcp/clipboard_vision_mcp/clipboard.py`
 - **Shell script injection** -- `install.sh` and `scripts/claude-ds.sh`

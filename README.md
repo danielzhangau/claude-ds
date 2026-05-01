@@ -125,7 +125,7 @@ DeepSeek V4 是纯文本模型，看不了图。Vision MCP 服务器把看图请
 
 **Vision guard hook：**
 
-`vision-guard.sh` 是一个 PreToolUse hook -- 模型想用 `Read` 读图片时，hook 直接拦下来，让它改用 `see_image`。比光靠 CLAUDE.md 里写提示词靠谱多了。
+`vision-guard.sh` 是一个 PreToolUse hook -- 模型想用 `Read` 读图片时，hook 直接拦下来，让它改用 `see_image`。纯硬约束，不依赖 CLAUDE.md 提示词。
 
 <p align="center">
   <img src="assets/vision-flow.svg" alt="Vision guard hook 流程" width="100%"/>

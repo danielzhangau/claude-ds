@@ -123,7 +123,7 @@ Any OpenAI-compatible vision API works. Examples:
 
 **Vision guard hook:**
 
-The `vision-guard.sh` PreToolUse hook provides deterministic enforcement -- when the model tries to `Read` an image file, the hook blocks it and redirects to `see_image` instead. This is more reliable than CLAUDE.md instructions alone.
+The `vision-guard.sh` PreToolUse hook provides deterministic enforcement -- when the model tries to `Read` an image file, the hook blocks it and redirects to `see_image` instead. Pure hard constraint, no CLAUDE.md instructions needed.
 
 <p align="center">
   <img src="assets/vision-flow.svg" alt="Vision guard hook flow" width="100%"/>
