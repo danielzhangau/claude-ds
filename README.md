@@ -160,10 +160,9 @@ DeepSeek V4 是纯文本模型，看不了图。Vision MCP 服务器把看图请
 
 或者手动清理：
 1. 从 `~/.zshrc`（或 `~/.bashrc`）删掉 `claude-ds` / `claude-ds-flash` 函数
-2. 从 `~/.claude.json` 删掉 `mcpServers` 里的 `"vision"` 项
+2. 删除 `~/.claude/claude-ds-vision-mcp.json`
 3. 从 `~/.claude/settings.json` 删掉 `"vision-guard"` hook
 4. 从 `~/.claude/settings.json` 删掉 permissions 里的 `"mcp__vision"`
-5. 从 `~/.claude/CLAUDE.md` 删掉 Vision MCP 相关内容
 
 ## 许可证
 

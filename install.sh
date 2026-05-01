@@ -37,14 +37,21 @@ if [[ "${1:-}" == "--uninstall" ]]; then
     fi
   done
 
-  # Remove vision MCP from ~/.claude.json
+  # Remove vision MCP config (new location)
+  VISION_MCP_JSON="$CLAUDE_DIR/claude-ds-vision-mcp.json"
+  if [ -f "$VISION_MCP_JSON" ]; then
+    rm -f "$VISION_MCP_JSON"
+    ok "Removed $VISION_MCP_JSON"
+  fi
+
+  # Clean up legacy: vision in ~/.claude.json (old installs)
   if [ -f "$CLAUDE_JSON" ] && jq -e '.mcpServers.vision' "$CLAUDE_JSON" &>/dev/null; then
     jq 'del(.mcpServers.vision)' "$CLAUDE_JSON" > "$CLAUDE_JSON.tmp" \
       && mv "$CLAUDE_JSON.tmp" "$CLAUDE_JSON"
-    ok "Removed vision server from $CLAUDE_JSON"
+    ok "Removed vision server from $CLAUDE_JSON (legacy)"
   fi
 
-  # Also clean up legacy ~/.claude/mcp.json if present
+  # Clean up legacy: ~/.claude/mcp.json (old installs)
   if [ -f "$CLAUDE_DIR/mcp.json" ] && jq -e '.mcpServers.vision' "$CLAUDE_DIR/mcp.json" &>/dev/null; then
     jq 'del(.mcpServers.vision)' "$CLAUDE_DIR/mcp.json" > "$CLAUDE_DIR/mcp.json.tmp" \
       && mv "$CLAUDE_DIR/mcp.json.tmp" "$CLAUDE_DIR/mcp.json"
@@ -54,7 +61,6 @@ if [[ "${1:-}" == "--uninstall" ]]; then
   warn "Manual cleanup needed:"
   warn "  1. Remove vision-guard hook from $CLAUDE_DIR/settings.json"
   warn "  2. Remove 'mcp__vision' from permissions in $CLAUDE_DIR/settings.json"
-  warn "  3. Remove Vision MCP hint from $CLAUDE_DIR/CLAUDE.md"
   echo "Done."
   exit 0
 fi
@@ -212,39 +218,32 @@ if [ -n "$vision_key" ]; then
 
   ok "Vision MCP server installed at $MCP_INSTALL_DIR"
 
-  # --- Configure MCP in ~/.claude.json (Claude Code's actual config) ---
-  info "Configuring MCP server in $CLAUDE_JSON..."
-
+  # --- Configure MCP in standalone config (loaded via --mcp-config by claude-ds) ---
   PYTHON_PATH="$MCP_INSTALL_DIR/.venv/bin/python"
+  VISION_MCP_JSON="$CLAUDE_DIR/claude-ds-vision-mcp.json"
 
-  if [ ! -f "$CLAUDE_JSON" ]; then
-    # Create minimal ~/.claude.json if it doesn't exist
-    echo '{"mcpServers":{}}' > "$CLAUDE_JSON"
-  fi
+  info "Configuring Vision MCP in $VISION_MCP_JSON..."
 
-  if jq -e '.mcpServers.vision' "$CLAUDE_JSON" &>/dev/null; then
-    warn "Vision MCP already configured in $CLAUDE_JSON (skipping)"
-  else
-    # Ensure mcpServers key exists
-    if ! jq -e '.mcpServers' "$CLAUDE_JSON" &>/dev/null; then
-      jq '.mcpServers = {}' "$CLAUDE_JSON" > "$CLAUDE_JSON.tmp" \
-        && mv "$CLAUDE_JSON.tmp" "$CLAUDE_JSON"
-    fi
+  jq -n --arg py "$PYTHON_PATH" \
+     --arg key "$vision_key" \
+     --arg base "$vision_base" \
+     --arg model "$vision_model" \
+     '{mcpServers: {vision: {
+       command: $py,
+       args: ["-m", "clipboard_vision_mcp.server"],
+       env: {
+         VISION_API_KEY: $key,
+         VISION_BASE_URL: $base,
+         VISION_MODEL: $model
+       }
+     }}}' > "$VISION_MCP_JSON"
+  ok "Created $VISION_MCP_JSON"
 
-    jq --arg py "$PYTHON_PATH" \
-       --arg key "$vision_key" \
-       --arg base "$vision_base" \
-       --arg model "$vision_model" \
-       '.mcpServers.vision = {
-         "command": $py,
-         "args": ["-m", "clipboard_vision_mcp.server"],
-         "env": {
-           "VISION_API_KEY": $key,
-           "VISION_BASE_URL": $base,
-           "VISION_MODEL": $model
-         }
-       }' "$CLAUDE_JSON" > "$CLAUDE_JSON.tmp" && mv "$CLAUDE_JSON.tmp" "$CLAUDE_JSON"
-    ok "Added vision server to $CLAUDE_JSON"
+  # Clean up legacy: remove vision from ~/.claude.json if present (old installs)
+  if [ -f "$CLAUDE_JSON" ] && jq -e '.mcpServers.vision' "$CLAUDE_JSON" &>/dev/null; then
+    jq 'del(.mcpServers.vision)' "$CLAUDE_JSON" > "$CLAUDE_JSON.tmp" \
+      && mv "$CLAUDE_JSON.tmp" "$CLAUDE_JSON"
+    ok "Migrated vision server out of $CLAUDE_JSON"
   fi
 
   # --- Configure settings.json ---
@@ -279,21 +278,6 @@ if [ -n "$vision_key" ]; then
          hooks: {PreToolUse: [{matcher: "Read", hooks: [{type: "command", command: $cmd, timeout: 5}]}]}
        }' > "$SETTINGS_JSON"
     ok "Created $SETTINGS_JSON with vision-guard hook and permissions"
-  fi
-
-  # --- Add CLAUDE.md hint ---
-  CLAUDE_MD="$CLAUDE_DIR/CLAUDE.md"
-  if [ -f "$CLAUDE_MD" ]; then
-    if ! grep -q "mcp__vision__see_image" "$CLAUDE_MD"; then
-      echo "" >> "$CLAUDE_MD"
-      cat "$SCRIPT_DIR/examples/claude-md-additions.md" >> "$CLAUDE_MD"
-      ok "Added Vision MCP hint to $CLAUDE_MD"
-    else
-      warn "Vision MCP hint already in $CLAUDE_MD (skipping)"
-    fi
-  else
-    cp "$SCRIPT_DIR/examples/claude-md-additions.md" "$CLAUDE_MD"
-    ok "Created $CLAUDE_MD with Vision MCP hint"
   fi
 
   ok "Vision support fully configured"

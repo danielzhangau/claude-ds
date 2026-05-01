@@ -23,6 +23,9 @@
 : "${CLAUDE_DS_MAX_RETRIES:=3}"
 : "${CLAUDE_DS_EFFORT:=max}"
 
+# Vision MCP config (only loaded if file exists)
+CLAUDE_DS_VISION_MCP="$HOME/.claude/claude-ds-vision-mcp.json"
+
 # claude-ds: Pro mode -- complex coding, architecture, refactoring
 # Main conversation uses V4-Pro (1M context), all internal tasks use V4-Flash
 claude-ds() {
@@ -30,6 +33,11 @@ claude-ds() {
     echo "Error: DEEPSEEK_API_KEY is not set." >&2
     echo "Get your API key at https://platform.deepseek.com/api_keys" >&2
     return 1
+  fi
+
+  local mcp_args=()
+  if [ -f "$CLAUDE_DS_VISION_MCP" ]; then
+    mcp_args=(--mcp-config "$CLAUDE_DS_VISION_MCP")
   fi
 
   ANTHROPIC_BASE_URL="$CLAUDE_DS_ENDPOINT" \
@@ -43,7 +51,7 @@ claude-ds() {
   CLAUDE_CODE_EFFORT_LEVEL="$CLAUDE_DS_EFFORT" \
   CLAUDE_CODE_MAX_RETRIES="$CLAUDE_DS_MAX_RETRIES" \
   CLAUDE_CODE_DISABLE_LEGACY_MODEL_REMAP=1 \
-  claude "$@"
+  claude "${mcp_args[@]}" "$@"
 }
 
 # claude-ds-flash: Flash mode -- quick fixes, simple tasks, maximum savings
@@ -53,6 +61,11 @@ claude-ds-flash() {
     echo "Error: DEEPSEEK_API_KEY is not set." >&2
     echo "Get your API key at https://platform.deepseek.com/api_keys" >&2
     return 1
+  fi
+
+  local mcp_args=()
+  if [ -f "$CLAUDE_DS_VISION_MCP" ]; then
+    mcp_args=(--mcp-config "$CLAUDE_DS_VISION_MCP")
   fi
 
   ANTHROPIC_BASE_URL="$CLAUDE_DS_ENDPOINT" \
@@ -66,5 +79,5 @@ claude-ds-flash() {
   CLAUDE_CODE_EFFORT_LEVEL="$CLAUDE_DS_EFFORT" \
   CLAUDE_CODE_MAX_RETRIES="$CLAUDE_DS_MAX_RETRIES" \
   CLAUDE_CODE_DISABLE_LEGACY_MODEL_REMAP=1 \
-  claude "$@"
+  claude "${mcp_args[@]}" "$@"
 }
