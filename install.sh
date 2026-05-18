@@ -10,6 +10,16 @@ CLAUDE_JSON="$HOME/.claude.json"
 MCP_INSTALL_DIR="$SCRIPT_DIR/vision-mcp"
 SHELL_RC=""
 
+# Clean up any .tmp residue from a previous interrupted run on exit.
+# Atomic-write pattern (jq > $f.tmp && mv $f.tmp $f) can leave $f.tmp if jq fails.
+_cleanup_tmp() {
+  rm -f "$CLAUDE_JSON.tmp" \
+        "$CLAUDE_DIR/claude-ds-vision-mcp.json.tmp" \
+        "$CLAUDE_DIR/mcp.json.tmp" \
+        "$CLAUDE_DIR/settings.json.tmp" 2>/dev/null || true
+}
+trap _cleanup_tmp EXIT
+
 # Colors (disabled if not a terminal)
 if [ -t 1 ]; then
   RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; NC='\033[0m'
@@ -27,7 +37,7 @@ if [[ "${1:-}" == "--uninstall" ]]; then
   echo "Uninstalling claude-ds..."
 
   # Remove shell functions
-  for rc in "$HOME/.zshrc" "$HOME/.bashrc"; do
+  for rc in "$HOME/.zshrc" "$HOME/.bashrc" "$HOME/.bash_profile"; do
     if [ -f "$rc" ] && grep -q "claude-ds.sh" "$rc"; then
       # Remove the source line
       sed -i.bak '/claude-ds\.sh/d' "$rc"
@@ -80,15 +90,22 @@ if ! command -v claude &>/dev/null; then
 fi
 ok "Claude Code CLI found: $(which claude)"
 
-# Check jq (needed by vision-guard hook)
+# Check jq (needed by vision-guard hook and JSON config edits below)
 if ! command -v jq &>/dev/null; then
-  warn "jq not found. Installing..."
+  warn "jq not found. Attempting auto-install..."
   if command -v brew &>/dev/null; then
     brew install jq
   elif command -v apt-get &>/dev/null; then
     sudo apt-get install -y jq
+  elif command -v dnf &>/dev/null; then
+    sudo dnf install -y jq
+  elif command -v pacman &>/dev/null; then
+    sudo pacman -S --noconfirm jq
   else
-    error "Please install jq manually: https://jqlang.github.io/jq/download/"
+    error "Could not auto-install jq. Install it manually:"
+    error "  macOS (no brew): download binary from https://jqlang.github.io/jq/download/"
+    error "                   then place it in /usr/local/bin/jq and chmod +x"
+    error "  Linux:           apt/dnf/pacman install jq, or download a static binary"
     exit 1
   fi
 fi
@@ -108,9 +125,14 @@ if [[ "$(uname)" == "Darwin" ]] && ! command -v pngpaste &>/dev/null; then
   fi
 fi
 
-# Detect shell
+# Detect shell config file.
+# Priority: zsh > macOS bash (.bash_profile) > Linux bash (.bashrc) > fallback create .zshrc.
+# Rationale: on macOS, bash loads .bash_profile (not .bashrc) for login shells,
+# which is what Terminal.app opens by default. Linux distros generally use .bashrc.
 if [ -f "$HOME/.zshrc" ]; then
   SHELL_RC="$HOME/.zshrc"
+elif [[ "$(uname)" == "Darwin" ]] && [ -f "$HOME/.bash_profile" ]; then
+  SHELL_RC="$HOME/.bash_profile"
 elif [ -f "$HOME/.bashrc" ]; then
   SHELL_RC="$HOME/.bashrc"
 else
@@ -224,6 +246,8 @@ if [ -n "$vision_key" ]; then
 
   info "Configuring Vision MCP in $VISION_MCP_JSON..."
 
+  # Atomic write: build to .tmp, then rename. Protects existing config
+  # from being truncated if jq fails or the process is interrupted.
   jq -n --arg py "$PYTHON_PATH" \
      --arg key "$vision_key" \
      --arg base "$vision_base" \
@@ -236,7 +260,8 @@ if [ -n "$vision_key" ]; then
          VISION_BASE_URL: $base,
          VISION_MODEL: $model
        }
-     }}}' > "$VISION_MCP_JSON"
+     }}}' > "$VISION_MCP_JSON.tmp" \
+    && mv "$VISION_MCP_JSON.tmp" "$VISION_MCP_JSON"
   ok "Created $VISION_MCP_JSON"
 
   # Clean up legacy: remove vision from ~/.claude.json if present (old installs)
@@ -271,12 +296,13 @@ if [ -n "$vision_key" ]; then
       ok "Added vision-guard hook"
     fi
   else
-    # Create minimal settings.json for fresh installs
+    # Create minimal settings.json for fresh installs (atomic write)
     jq -n --arg cmd "$HOOK_PATH" \
        '{
          permissions: {allow: ["mcp__vision"]},
          hooks: {PreToolUse: [{matcher: "Read", hooks: [{type: "command", command: $cmd, timeout: 5}]}]}
-       }' > "$SETTINGS_JSON"
+       }' > "$SETTINGS_JSON.tmp" \
+      && mv "$SETTINGS_JSON.tmp" "$SETTINGS_JSON"
     ok "Created $SETTINGS_JSON with vision-guard hook and permissions"
   fi
 
