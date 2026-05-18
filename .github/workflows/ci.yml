@@ -82,15 +82,34 @@ jobs:
         env:
           DEEPSEEK_API_KEY: ci-fake-deepseek-key
         run: |
-          # Part 1: confirm install.sh actually wrote a source line into an RC file.
-          # We don't `source $HOME/.bashrc` here because Ubuntu's default .bashrc
-          # returns early in non-interactive shells (the case-$- guard at the top),
-          # so our appended `source ...claude-ds.sh` line never executes.
-          if ! grep -l "claude-ds.sh" "$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.bash_profile" 2>/dev/null; then
-            echo "FAIL: install.sh did not append to any RC file"
-            ls -la "$HOME"/.bashrc "$HOME"/.zshrc "$HOME"/.bash_profile 2>/dev/null || true
+          # Debug: show what install.sh actually wrote where, so any
+          # future failure here is diagnosable from the log alone.
+          echo "=== $HOME contents ==="
+          ls -la "$HOME" | grep -E '\.(bash|zsh|profile)' || true
+          for f in "$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.bash_profile" "$HOME/.profile"; do
+            if [ -f "$f" ]; then
+              echo "--- tail -10 $f ---"
+              tail -10 "$f"
+            fi
+          done
+          echo "===================="
+
+          # Part 1: locate the RC file install.sh wrote to.
+          # We don't `source ~/.bashrc` because Ubuntu's default .bashrc
+          # returns early in non-interactive shells (the case-$- guard),
+          # so the appended `source ...claude-ds.sh` line never executes.
+          RC_FILE=""
+          for candidate in "$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.bash_profile"; do
+            if [ -f "$candidate" ] && grep -q "claude-ds\.sh" "$candidate"; then
+              RC_FILE="$candidate"
+              break
+            fi
+          done
+          if [ -z "$RC_FILE" ]; then
+            echo "FAIL: no RC file contains 'claude-ds.sh'"
             exit 1
           fi
+          echo "[ok] install entry found in $RC_FILE"
 
           # Part 2: source claude-ds.sh directly to verify env-var wiring.
           # shellcheck disable=SC1091
