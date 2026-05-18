@@ -16,9 +16,11 @@
 
 | 模型 | 输出价格（每百万 token） | 对比 Opus |
 |------|:----------------------:|:---------:|
-| Claude Opus 4.6 | $25.00 | 1x |
-| DeepSeek V4-Pro | $3.48 | **便宜 ~7x** |
+| Claude Opus 4.7 | $25.00 | 1x |
+| DeepSeek V4-Pro | $3.48 (促销 $0.87 ¹) | **便宜 ~7x（促销期 ~29x）** |
 | DeepSeek V4-Flash | $0.28 | **便宜 ~89x** |
+
+> ¹ DeepSeek V4-Pro 当前 75% 折扣促销至 **2026-05-31 15:59 UTC**，实付 $0.87/百万 output token。促销结束后恢复 $3.48。价格请以 [DeepSeek 官方定价页](https://api-docs.deepseek.com/quick_start/pricing) 为准。
 
 ## 开始之前
 
@@ -76,7 +78,7 @@ claude-ds-flash    # V4-Flash -- 小改动、简单任务
 <details>
 <summary><strong>环境变量（进阶）</strong></summary>
 
-这些变量是逆向 Claude Code v2.1.71 二进制后整理出来的。大部分第三方教程都漏掉了几个关键的，下面标出来了。
+这些变量是逆向 Claude Code 2.1.x 二进制后整理出来的（首次于 v2.1.71 验证，并在 2.1.133 上复核仍有效）。大部分第三方教程都漏掉了几个关键的，下面标出来了。
 
 | 变量 | 干什么用的 | 不设会怎样 |
 |------|-----------|-----------|

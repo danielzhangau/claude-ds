@@ -16,9 +16,11 @@
 
 | Model | Output cost (per 1M tokens) | Relative to Opus |
 |-------|:---------------------------:|:----------------:|
-| Claude Opus 4.6 | $25.00 | 1x |
-| DeepSeek V4-Pro | $3.48 | **~7x cheaper** |
+| Claude Opus 4.7 | $25.00 | 1x |
+| DeepSeek V4-Pro | $3.48 (promo $0.87 ¹) | **~7x cheaper (~29x during promo)** |
 | DeepSeek V4-Flash | $0.28 | **~89x cheaper** |
+
+> ¹ DeepSeek V4-Pro is currently 75% off through **2026-05-31 15:59 UTC**, putting effective output at $0.87/MTok. Reverts to $3.48 after that. Check the [official DeepSeek pricing page](https://api-docs.deepseek.com/quick_start/pricing) for live prices.
 
 ## Prerequisites
 
@@ -74,7 +76,7 @@ The `claude-ds` command is a thin wrapper that launches `claude` with environmen
 <details>
 <summary><strong>Environment variables (advanced)</strong></summary>
 
-These variables were identified by reverse-engineering Claude Code v2.1.71's binary. The critical ones missing from most third-party setups are marked.
+These variables were identified by reverse-engineering Claude Code 2.1.x binaries (first verified on v2.1.71, re-confirmed on 2.1.133). The critical ones missing from most third-party setups are marked.
 
 | Variable | Purpose | Default risk if unset |
 |----------|---------|----------------------|
