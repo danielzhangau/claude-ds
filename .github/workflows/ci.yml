@@ -82,11 +82,22 @@ jobs:
         env:
           DEEPSEEK_API_KEY: ci-fake-deepseek-key
         run: |
+          # Part 1: confirm install.sh actually wrote a source line into an RC file.
+          # We don't `source $HOME/.bashrc` here because Ubuntu's default .bashrc
+          # returns early in non-interactive shells (the case-$- guard at the top),
+          # so our appended `source ...claude-ds.sh` line never executes.
+          if ! grep -l "claude-ds.sh" "$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.bash_profile" 2>/dev/null; then
+            echo "FAIL: install.sh did not append to any RC file"
+            ls -la "$HOME"/.bashrc "$HOME"/.zshrc "$HOME"/.bash_profile 2>/dev/null || true
+            exit 1
+          fi
+
+          # Part 2: source claude-ds.sh directly to verify env-var wiring.
           # shellcheck disable=SC1091
-          source "$HOME/.bashrc" 2>/dev/null || source "$HOME/.zshrc"
+          source "$GITHUB_WORKSPACE/scripts/claude-ds.sh"
           type claude-ds
           type claude-ds-flash
-          # Verify env-var wiring in actual invocation
+
           out=$(claude-ds --print probe)
           echo "$out"
           echo "$out" | grep -q "ANTHROPIC_MODEL=deepseek-v4-pro\[1m\]"
