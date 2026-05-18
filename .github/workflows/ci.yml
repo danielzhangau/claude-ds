@@ -14,7 +14,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
     defaults:
       run:
         working-directory: vision-mcp
@@ -48,3 +48,55 @@ jobs:
         with:
           scandir: .
           additional_files: install.sh scripts/claude-ds.sh scripts/vision-guard.sh
+
+  install-smoke:
+    name: install.sh smoke test (ubuntu)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install jq + mock claude CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+          mkdir -p "$HOME/.local/bin"
+          cat > "$HOME/.local/bin/claude" <<'EOF'
+          #!/usr/bin/env bash
+          # Mock claude CLI for CI: echoes resolved env to verify install.sh wiring
+          echo "mock-claude args=$*"
+          echo "ANTHROPIC_MODEL=$ANTHROPIC_MODEL"
+          echo "ANTHROPIC_SMALL_FAST_MODEL=$ANTHROPIC_SMALL_FAST_MODEL"
+          echo "ANTHROPIC_BASE_URL=$ANTHROPIC_BASE_URL"
+          EOF
+          chmod +x "$HOME/.local/bin/claude"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Run install.sh non-interactively (skip vision)
+        env:
+          DEEPSEEK_API_KEY: ci-fake-deepseek-key
+        run: |
+          # Empty input on the vision-key prompt skips vision setup
+          printf '\n' | bash ./install.sh
+
+      - name: Verify shell functions are sourced and model mapping is correct
+        env:
+          DEEPSEEK_API_KEY: ci-fake-deepseek-key
+        run: |
+          # shellcheck disable=SC1091
+          source "$HOME/.bashrc" 2>/dev/null || source "$HOME/.zshrc"
+          type claude-ds
+          type claude-ds-flash
+          # Verify env-var wiring in actual invocation
+          out=$(claude-ds --print probe)
+          echo "$out"
+          echo "$out" | grep -q "ANTHROPIC_MODEL=deepseek-v4-pro\[1m\]"
+          echo "$out" | grep -q "ANTHROPIC_SMALL_FAST_MODEL=deepseek-v4-flash"
+          echo "$out" | grep -q "ANTHROPIC_BASE_URL=https://api.deepseek.com/anthropic"
+          flash_out=$(claude-ds-flash --print probe)
+          echo "$flash_out" | grep -q "ANTHROPIC_MODEL=deepseek-v4-flash"
+
+      - name: Run uninstall and verify cleanup
+        run: |
+          bash ./install.sh --uninstall
+          ! grep -q "claude-ds.sh" "$HOME/.bashrc" 2>/dev/null
+          ! grep -q "claude-ds.sh" "$HOME/.zshrc" 2>/dev/null
