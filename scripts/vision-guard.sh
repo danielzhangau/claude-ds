@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Claude Code PreToolUse hook: redirect image Read calls to Vision MCP
 #
 # Only activates when ANTHROPIC_BASE_URL points to a non-Anthropic endpoint.
